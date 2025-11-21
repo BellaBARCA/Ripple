@@ -25,7 +25,7 @@ Texture2D textures[frames];
 RenderTexture2D renderTextures[frames];
 
 double timer = 0.0;
-int color_mode = 0; // 0:彩虹, 1:火焰, 2:海洋
+int color_mode = 0; 
 
 double screen_x(double x) {
     return x + xScreen / 2;
@@ -43,7 +43,7 @@ int create_random(int x1, int x2) {
     }
 }
 
-// 1. 彩虹渐变效果
+// 1.rainbow effect
 Color get_rainbow_color(double time, double x, double y) {
     double hue = fmod(time * 0.5 + atan2(y, x) / (2 * pi), 1.0);
     
@@ -72,7 +72,7 @@ Color get_rainbow_color(double time, double x, double y) {
     };
 }
 
-// 2. 火焰效果
+// 2. fire effect
 Color get_fire_color(double time, double x, double y) {
     double intensity = 0.5 + 0.5 * sin(time * 3 + sqrt(x*x + y*y) * 0.1);
     double flicker = 0.8 + 0.2 * sin(time * 8 + x * 0.5);
@@ -85,21 +85,52 @@ Color get_fire_color(double time, double x, double y) {
     };
 }
 
-// 3. 海洋波浪效果
+// 3. ocean effect
 Color get_ocean_color(double time, double x, double y) {
-    double wave1 = sin(time * 2 + x * 0.05) * 0.3 + 0.7;
-    double wave2 = cos(time * 1.5 + y * 0.03) * 0.2 + 0.8;
-    double wave = (wave1 + wave2) * 0.5;
+    double wave1 = sin(time * 1.2 + x * 0.03 + y * 0.02) * 0.4 + 0.6;
+    double wave2 = cos(time * 1.8 - x * 0.025 + y * 0.015) * 0.3 + 0.7;
+    double wave3 = sin(time * 2.4 + x * 0.02 - y * 0.025) * 0.2 + 0.8;
+    double wave4 = cos(time * 0.9 + sqrt(x*x + y*y) * 0.05) * 0.3 + 0.7;
     
-    return (Color){
-        (unsigned char)(30 + 40 * wave),
-        (unsigned char)(80 + 100 * wave),
-        (unsigned char)(150 + 105 * wave),
-        255
-    };
+    double combined_wave = (wave1 + wave2 + wave3 + wave4) / 4.0;
+    
+    double position_factor = (atan2(y, x) + PI) / (2 * PI); 
+    double depth_factor = 1.0 - fmin(sqrt(x*x + y*y) / 15.0, 1.0); 
+    
+    Color ocean_color;
+    
+    // 高雅人士配色中，每日审美积累
+    if (combined_wave > 0.7) {
+        ocean_color.r = (unsigned char)(40 + 30 * sin(time + position_factor * 2));
+        ocean_color.g = (unsigned char)(180 + 40 * combined_wave);
+        ocean_color.b = (unsigned char)(210 + 45 * combined_wave);
+    }
+    else if (combined_wave > 0.5) {
+        ocean_color.r = (unsigned char)(30 + 20 * depth_factor);
+        ocean_color.g = (unsigned char)(120 + 60 * combined_wave);
+        ocean_color.b = (unsigned char)(180 + 75 * combined_wave);
+    }
+    else if (combined_wave > 0.3) {
+        ocean_color.r = (unsigned char)(20 + 15 * depth_factor);
+        ocean_color.g = (unsigned char)(80 + 40 * combined_wave);
+        ocean_color.b = (unsigned char)(150 + 50 * combined_wave);
+    }
+    else {
+        ocean_color.r = (unsigned char)(30 + 20 * sin(time * 0.5));
+        ocean_color.g = (unsigned char)(50 + 30 * combined_wave);
+        ocean_color.b = (unsigned char)(120 + 35 * combined_wave);
+    }
+    double pearl_effect = 0.7 + 0.3 * sin(time * 3 + x * 0.1 + y * 0.08);
+    ocean_color.r = (unsigned char)(ocean_color.r * pearl_effect);
+    ocean_color.g = (unsigned char)(ocean_color.g * pearl_effect);
+    ocean_color.b = (unsigned char)(ocean_color.b * pearl_effect);
+    
+    ocean_color.a = 255;
+    
+    return ocean_color;
 }
 
-// 根据当前模式获取颜色
+
 Color get_dynamic_color(double time, double x, double y) {
     switch (color_mode) {
         case 0: return get_rainbow_color(time, x, y);
@@ -163,7 +194,6 @@ void create_data() {
             pts[idx].x += x_increase;
             pts[idx].y += y_increase;
 
-            // 更新粒子颜色
             double time_factor = timer + j * 0.04;
             pts[idx].color = get_dynamic_color(time_factor, pts[idx].x, pts[idx].y);
             
@@ -207,7 +237,6 @@ int main() {
     while (!WindowShouldClose()) {
         timer += GetFrameTime();
         
-        // 检测按键切换颜色模式
         if (IsKeyPressed(KEY_ONE)) {
             color_mode = 0;
             need_recreate = true;
@@ -219,11 +248,10 @@ int main() {
             need_recreate = true;
         }
         
-        // 如果需要重新生成数据（颜色模式改变）
         if (need_recreate) {
             create_data();
             need_recreate = false;
-            f = 0; // 重置动画
+            f = 0; 
             extend = true;
             shrink = false;
         }
@@ -233,7 +261,6 @@ int main() {
       
         DrawTexture(textures[f], 0, 0, WHITE);
         
-        // 显示当前颜色模式和操作提示
         const char* mode_names[] = {"RAINBOW", "FIRE", "OCEAN"};
         DrawText(TextFormat("Color Mode: %s", mode_names[color_mode]), 10, 10, 30, WHITE);
         DrawText("Press 1, 2, 3 to change colors", 10, 50, 20, WHITE);
