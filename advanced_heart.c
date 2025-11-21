@@ -115,7 +115,7 @@ void create_data() {
 
     for (double r = 0.1; r <= 2 * pi; r += 0.005) {
         x2 = 16 * pow(sin(r), 3);
-        y2 = 13 * cos(r) - 5 * cos(2 * r) - 2 * cos(3 * r) - cos(4 * r);
+        y2 = - (13 * cos(r) - 5 * cos(2 * r) - 2 * cos(3 * r) - cos(4 * r));
 
         double d = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
         if (d > avg_d) {
