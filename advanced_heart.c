@@ -260,6 +260,10 @@ int main() {
         ClearBackground(BLACK);
       
         DrawTexture(textures[f], 0, 0, WHITE);
+        const char* bottomText = "Hasta la vista, baby!";
+        int textWidth = MeasureText(bottomText, 40);
+        DrawText(bottomText, xScreen/2 - textWidth/2, yScreen - 120, 40, WHITE);
+        
         
         const char* mode_names[] = {"RAINBOW", "FIRE", "OCEAN"};
         DrawText(TextFormat("Color Mode: %s", mode_names[color_mode]), 10, 10, 30, WHITE);
